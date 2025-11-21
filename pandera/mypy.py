@@ -97,18 +97,30 @@ class PanderaPlugin(Plugin):
         else:
             raise ValueError("typing.Iterable node not found")
 
-        union_type = cast(UnionType, ctx.default_signature.arg_types[0])
-
+        first_arg_type = ctx.default_signature.arg_types[0]
         pandas_data_type = ctx.default_signature.ret_type
-        arg_types = [
-            UnionType(
-                [
-                    Instance(iterable_node, [pandas_data_type]),
-                    *union_type.items,
-                ]
-            ),
-            *ctx.default_signature.arg_types[1:],
-        ]
+
+        if isinstance(first_arg_type, UnionType):
+            arg_types = [
+                UnionType(
+                    [
+                        Instance(iterable_node, [pandas_data_type]),
+                        *first_arg_type.items,
+                    ]
+                ),
+                *ctx.default_signature.arg_types[1:],
+            ]
+        else:
+            arg_types = [
+                UnionType(
+                    [
+                        Instance(iterable_node, [pandas_data_type]),
+                        first_arg_type,
+                    ]
+                ),
+                *ctx.default_signature.arg_types[1:],
+            ]
+
         return ctx.default_signature.copy_modified(arg_types=arg_types)
 
 
